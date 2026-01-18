@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>💕 Julie AI 💕 </title>
+  
+  <!-- External Libraries -->
+  <!-- PDF & PPT Generation -->
+  <script src="https://unpkg.com/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Image Generation (For saving Mind Maps) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- QR Code Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  
+  <style>
+    /* --- CORE THEME --- */
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f7f8fa;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0;
+      overflow-x: hidden; 
+      min-height: 100vh; 
+      color: #333;
+    }
+    
+    /* --- CHAT CONTAINER --- */
+    .chat-info-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 20px; 
+        padding-bottom: 10px;
+    }
+    h2 { color: #333; margin-bottom: 0; text-align: center; }
+    
+    #chatTitleDisplay {
+        font-size: 1em; font-weight: 500; color: #6c757d;
+        display: flex; align-items: center; gap: 8px;
+        cursor: pointer; padding: 5px 10px;
+        border-radius: 8px; transition: background-color 0.2s;
+    }
+    #chatTitleDisplay:hover { background-color: #e9e9e9; }
+    #chatTitleEditInput {
+        font-size: 1em; font-weight: 500; color: #333;
+        border: 1px solid #ccc; border-radius: 6px;
+        padding: 5px 10px; text-align: center; width: 250px;
+    }
+
+    .chatbox {
+      width: 100%; max-width: 900px; 
+      background: white;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1); 
+      display: flex; flex-direction: column;
+      flex-grow: 1; border-radius: 0; margin: 0 auto; 
+    }
+
+    /* --- HEADER --- */
+    .header-controls {
+        display: flex; justify-content: flex-end; align-items: center; 
+        padding: 10px 20px; border-bottom: 1px solid #eee; 
+        background: white; position: sticky; top: 0; z-index: 10; gap: 10px; 
+    }
+
+    /* --- MESSAGES AREA --- */
+    #messages {
+      flex-grow: 1; overflow-y: auto; padding: 20px;
+      background: #fafafa; margin: 0;
+      display: flex; flex-direction: column; scroll-behavior: smooth;
+    }
+    
+    .msg { display: flex; width: 100%; padding: 8px 0; box-sizing: border-box; }
+    .message-bubble {
+        padding: 12px 18px; border-radius: 18px;
+        max-width: 90%; min-width: 100px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        display: flex; flex-direction: column; align-items: flex-start; gap: 5px;
+    }
+    .user .message-bubble { 
+      background: #007bff; color: white; margin-left: auto; 
+      border-bottom-right-radius: 4px; align-items: flex-end; 
+    }
+    .bot .message-bubble { 
+      background: #f1f1f1; color: #333; margin-right: auto; 
+      border-bottom-left-radius: 4px;
+    }
+
+    /* --- IMAGES & FILES IN CHAT --- */
+    .image-grid { display: flex; flex-wrap: wrap; gap: 5px; max-width: 100%; }
+    .chat-image { max-width: 200px; max-height: 200px; border-radius: 10px; object-fit: cover; }
+    
+    /* --- TYPING INDICATOR --- */
+    .typing-dots { display: flex; gap: 5px; align-items: center; margin-top: 4px; }
+    .typing-dot {
+      width: 8px; height: 8px; background-color: #777;
+      border-radius: 50%; animation: pulse 1.4s infinite ease-in-out;
+    }
+    .typing-dot:nth-child(1) { animation-delay: 0s; }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes pulse {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.6; }
+      40% { transform: scale(1.0); opacity: 1; }
+    }
+
+    .bot-text-content { line-height: 1.5; white-space: pre-wrap; font-size: 1em; flex-grow: 1; width: 100%; }
+    .bot strong { font-weight: 800; color: #000; }
+
+    /* --- ACTION BUTTONS (Copy/PDF/Image) --- */
+    .msg-actions {
+        display: flex; gap: 5px; align-self: flex-end; margin-top: 5px;
+    }
+    .mini-btn {
+      background: #007bff20; color: #007bff; border: none;
+      padding: 4px 8px; font-size: 11px; font-weight: bold;
+      border-radius: 12px; cursor: pointer; 
+      transition: background 0.2s;
+    }
+    .mini-btn:hover { background: #007bff40; }
+
+    /* --- PPT DOWNLOAD CARD --- */
+    .ppt-card {
+        background: #fff; border: 1px solid #e0e0e0;
+        border-radius: 10px; padding: 15px; margin-top: 10px;
+        display: flex; flex-direction: column; gap: 10px;
+        width: 100%; box-sizing: border-box;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .ppt-card h4 { margin: 0; color: #d24726; display: flex; align-items: center; gap: 8px; }
+    .ppt-download-btn {
+        background: #d24726; color: white; border: none;
+        padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .ppt-download-btn:hover { background: #b0381b; }
+
+    /* --- MERMAID / MIND MAP STYLES --- */
+    .mermaid {
+        background: white;
+        padding: 10px;
+        border-radius: 8px;
+        margin-top: 10px;
+        border: 1px solid #ddd;
+        overflow-x: auto;
+        display: flex;
+        justify-content: center;
+        min-height: 50px;
+    }
+
+    /* --- QR CODE CARD STYLES --- */
+    .qr-card {
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        margin-top: 10px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .qr-placeholder { padding: 10px; background: white; }
+    .qr-label { font-weight: bold; color: #555; font-size: 0.9em; }
+    body.dark-mode .qr-card { background: #2c2c2c; border-color: #444; }
+    body.dark-mode .qr-placeholder { background: white; border-radius: 4px; }
+    body.dark-mode .qr-label { color: #ccc; }
+
+    /* --- CODE BLOCK STYLES --- */
+    .code-block-wrapper {
+        margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; width: 100%;
+    }
+    .code-header {
+        display: flex; align-items: center; justify-content: space-between; background: #f5f5f5; padding: 6px 12px; border-bottom: 1px solid #ddd; font-size: 0.85em; color: #555;
+    }
+    .code-lang { font-weight: bold; text-transform: uppercase; }
+    .code-content { margin: 0; padding: 12px; overflow-x: auto; background: #fbfbfb; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.9em; }
+    body.dark-mode .code-block-wrapper { border-color: #444; }
+    body.dark-mode .code-header { background: #2c2c2c; border-bottom-color: #444; color: #ccc; }
+    body.dark-mode .code-content { background: #1e1e1e; color: #e0e0e0; }
+    
+    /* --- INPUT AREA --- */
+    .input-wrapper {
+        display: flex; flex-direction: column; width: 100%;
+        background: white; border-top: 1px solid #eee;
+    }
+
+    /* PREVIEW AREA */
+    #imagePreviewContainer {
+        display: none; padding: 10px 20px; background: #f9f9f9;
+        border-bottom: 1px solid #eee; overflow-x: auto; 
+        white-space: nowrap; gap: 10px;
+    }
+    #imagePreviewContainer.active { display: flex; }
+    
+    .preview-box { position: relative; display: inline-flex; flex-direction: column; align-items: center; margin-right: 10px; width: 70px; }
+    .preview-img-thumb { height: 60px; width: 60px; object-fit: cover; border-radius: 8px; border: 2px solid #007bff; }
+    .preview-file-thumb { 
+        height: 60px; width: 60px; background: #e9ecef; border-radius: 8px; border: 2px solid #6c757d;
+        display: flex; align-items: center; justify-content: center; font-size: 24px;
+    }
+    .preview-name { font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; text-align: center; margin-top: 2px; color: #666; }
+    
+    .remove-img-btn {
+        position: absolute; top: -5px; right: 0px;
+        background: #dc3545; color: white; border: none;
+        border-radius: 50%; width: 20px; height: 20px;
+        font-size: 12px; cursor: pointer; display: flex;
+        align-items: center; justify-content: center;
+    }
+
+    .input-area { display: flex; align-items: flex-end; padding: 15px 20px; gap: 8px; }
+    
+    textarea {
+      flex-grow: 1; height: 60px; border-radius: 12px; 
+      border: 1px solid #ccc; padding: 10px; resize: none;
+    }
+
+    /* Buttons */
+    .action-btn {
+        width: 45px; height: 45px; border-radius: 12px; border: none;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0; cursor: pointer; font-size: 1.2rem; transition: background 0.2s;
+    }
+    #cameraBtn { background: #6c757d; color: white; }
+    #cameraBtn:hover { background: #5a6268; }
+    
+    #fileBtn { background: #17a2b8; color: white; font-size: 1.4rem; }
+    #fileBtn:hover { background: #138496; }
+
+    #micBtn { background: #28a745; color: white; }
+    #micBtn:hover { background: #218838; }
+    #micBtn.listening { background: #dc3545; animation: pulseRed 1.5s infinite; }
+
+    #send { background: #007bff; color: white; width: 50px; height: 48px; font-size: 24px; }
+    #send:hover { background: #0069d9; }
+    button:disabled { background: #aaa !important; cursor: not-allowed; }
+
+    @keyframes pulseRed { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+    small { color: #777; margin-top: 8px; display: block; text-align: center; margin-bottom: 5px; }
+
+    /* --- DRAWER & SETTINGS --- */
+    #settingsDrawer {
+        position: fixed; top: 0; right: 0; width: 90%; max-width: 400px; height: 100%;
+        background-color: white; box-shadow: -4px 0 15px rgba(0,0,0,0.2);
+        transform: translateX(100%); transition: transform 0.3s ease-out; 
+        padding: 20px; box-sizing: border-box; z-index: 1000; 
+        display: flex; flex-direction: column;
+    }
+    #settingsDrawer.open { transform: translateX(0); }
+    .drawer-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
+    #drawerContent { flex-grow: 1; overflow-y: auto; }
+    
+    input[type="password"] { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;}
+    .drawer-btn { width: 100%; padding: 10px; margin-bottom: 5px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: bold; }
+    .btn-green { background: #28a745; } .btn-red { background: #dc3545; } .btn-gray { background: #6c757d; }
+    
+    .drawer-input { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; }
+
+    /* --- CONVERSATION LIST --- */
+    .conv-item {
+        display: flex; align-items: center; padding: 10px; border-radius: 8px;
+        background-color: #f1f1f1; margin-bottom: 10px; cursor: pointer;
+    }
+    .conv-item.active { background-color: #d1ecf1; border: 2px solid #007bff; }
+    .conv-info { flex-grow: 1; overflow: hidden; }
+    .conv-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .conv-date { font-size: 0.8em; color: #6c757d; }
+    
+    /* --- DARK MODE --- */
+    body.dark-mode { background: #121212; color: #f0f0f0; }
+    body.dark-mode h2 { color: #f0f0f0; }
+    body.dark-mode .chatbox { background: #1e1e1e; }
+    body.dark-mode .header-controls, body.dark-mode #messages, body.dark-mode .input-wrapper, body.dark-mode .input-area { background: #1e1e1e; border-color: #333; }
+    body.dark-mode textarea { background: #2c2c2c; border-color: #555; color: #f0f0f0; }
+    body.dark-mode .user .message-bubble { background: #4a90e2; }
+    body.dark-mode .bot .message-bubble { background: #2c2c2c; color: #f0f0f0; }
+    body.dark-mode .bot strong { color: white; }
+    body.dark-mode #settingsDrawer { background: #1e1e1e; color: #f0f0f0; }
+    body.dark-mode .conv-item { background: #242424; color: #fff; }
+    body.dark-mode .preview-file-thumb { background: #333; border-color: #555; }
+    body.dark-mode .ppt-card { background: #2c2c2c; border-color: #444; }
+    body.dark-mode .mermaid { background: #e0e0e0; }
+    body.dark-mode .drawer-input { background: #2c2c2c; color: white; border-color: #555; }
+    
+    /* --- CODE PREVIEW MODAL --- */
+    #previewModal { display: none; position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; }
+    #previewModal .modal-content { width: 90%; height: 85%; max-width: 1000px; padding: 0; display: flex; flex-direction: column; overflow: hidden; }
+    .preview-header { padding: 10px 20px; background: #f1f1f1; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ccc; }
+    .preview-header h4 { margin: 0; color: #333; }
+    #previewFrame { flex-grow: 1; border: none; background: white; width: 100%; }
+    body.dark-mode .preview-header { background: #333; border-bottom-color: #555; }
+    body.dark-mode .preview-header h4 { color: #f0f0f0; }
+    
+    /* --- MODALS --- */
+    .modal-overlay { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; }
+    .modal-content { background: white; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px; text-align: center; }
+    body.dark-mode .modal-content { background: #2c2c2c; color: #fff; }
+
+  </style>
+</head>
+<body>
+  
+  <div class="chat-info-container">
+      <h2>💕 JULIE AI 💕</h2> 
+      
+      <div id="chatTitleContainer">
+          <div id="chatTitleDisplay">
+              <span id="currentChatTitleText">Loading Chat...</span>
+              <span class="edit-icon">✏️</span>
+          </div>
+          <input type="text" id="chatTitleEditInput" style="display: none;" maxlength="40" />
+      </div>
+  </div>
+
+  <div class="chatbox">
+    
+    <div class="header-controls">
+        <button id="voiceToggleBtn" class="action-btn" title="Toggle Voice">🔊</button>
+        <button id="settingsBtn" class="action-btn" style="background:transparent; color:#555; font-size:20px;">⚙️</button>
+    </div>
+
+    <div id="messages">
+      <div style="text-align: center; color: #888; padding: 20px;">
+        <span id="loadingIndicator">Initializing local memory...</span>
+      </div>
+    </div>
+
+    <div class="input-wrapper">
+        <!-- Preview Area -->
+        <div id="imagePreviewContainer"></div>
+
+        <!-- INPUT AREA -->
+        <div class="input-area">
+            <!-- Hidden File Input -->
+            <input type="file" id="fileInput" multiple style="display: none;" 
+                   accept="image/*, application/pdf, .txt, .js, .py, .html, .css, .json, .csv, .md">
+            
+            <!-- Camera/Image Button -->
+            <button id="cameraBtn" class="action-btn" title="Upload Photos">📷</button>
+            
+            <!-- Document Button -->
+            <button id="fileBtn" class="action-btn" title="Upload Documents (PDF, Code, Text)">📎</button>
+
+            <!-- Microphone Button -->
+            <button id="micBtn" class="action-btn" title="Speak to Julie">🎤</button>
+
+            <textarea id="prompt" placeholder="Ask Julie or upload files..."></textarea> 
+            
+            <button id="send">✈️</button>
+        </div>
+    </div>
+    
+    <small>❤️ made with love by Julie & Janu</small>
+  </div>
+
+  <!-- Settings Drawer -->
+  <div id="settingsDrawer">
+      <div class="drawer-header">
+          <h3>⚙️ Settings</h3>
+          <button id="closeDrawerBtn" style="background:none; border:none; font-size:20px;">X</button>
+      </div>
+      
+      <div id="drawerContent">
+          
+          <!-- NEW: Voice Settings Section -->
+          <div style="background:#f9f9f9; padding:10px; border-radius:8px; margin-bottom:15px; border:1px solid #eee;">
+            <h4 style="margin-top:0;">🗣️ Voice Settings</h4>
+            <select id="voiceSelect" class="drawer-input"></select>
+            
+            <div style="display:flex; gap:10px; align-items:center; margin-top:5px;">
+                <label style="font-size:0.9em;">Pitch:</label>
+                <input type="range" id="pitchRange" min="0.5" max="2" step="0.1" value="1" style="flex-grow:1;">
+            </div>
+            
+            <div style="display:flex; gap:10px; align-items:center; margin-top:5px;">
+                <label style="font-size:0.9em;">Speed:</label>
+                <input type="range" id="rateRange" min="0.5" max="2" step="0.1" value="1" style="flex-grow:1;">
+            </div>
+            
+            <button id="testVoiceBtn" class="drawer-btn btn-gray" style="margin-top:10px; font-size:0.9em;">Test Voice 🔊</button>
+          </div>
+          <hr>
+
+          <h4>History</h4>
+          <button id="startNewChatBtn" class="drawer-btn btn-green">➕ Start New Chat</button>
+          <div id="conversationList"></div>
+          <hr>
+
+          <h4>Theme</h4>
+          <button id="themeToggleBtn" class="drawer-btn btn-gray">Toggle Theme 🌙</button>
+          <hr>
+
+          <h4>Julie's Soul (API Key)</h4>
+          <input id="drawerApiKey" type="password" placeholder="Enter Gemini API Key" />
+          <button id="saveKeyBtn" class="drawer-btn btn-green">💾 Save Key</button>
+          <button id="deleteKeyBtn" class="drawer-btn btn-red">🗑️ Delete Key</button>
+          <div id="userIdDisplay" style="font-size:0.8em; color:#888; margin-top:10px;"></div>
+      </div>
+  </div>
+
+  <!-- Modals -->
+  <div id="errorModal" class="modal-overlay">
+    <div class="modal-content">
+      <h4 style="color: #007bff;">Julie's Message</h4>
+      <p id="modalMessage"></p>
+      <button onclick="document.getElementById('errorModal').style.display='none'">OK</button>
+    </div>
+  </div>
+
+  <div id="confirmModal" class="modal-overlay">
+    <div class="modal-content">
+      <h4>⚠️ Confirm Deletion</h4>
+      <p id="confirmMessage"></p>
+      <div style="display:flex; justify-content:center; gap:10px;">
+        <button id="confirmYes" class="btn-red" style="padding:8px 16px; border:none; border-radius:4px; color:white;">Yes</button>
+        <button id="confirmNo" class="btn-gray" style="padding:8px 16px; border:none; border-radius:4px; color:white;">No</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CODE PREVIEW MODAL -->
+  <div id="previewModal">
+      <div class="modal-content">
+          <div class="preview-header">
+              <h4>🌐 Live Code Preview</h4>
+              <button onclick="document.getElementById('previewModal').style.display='none'" style="cursor:pointer; border:none; background:none; font-size:20px;">✕</button>
+          </div>
+          <iframe id="previewFrame"></iframe>
+      </div>
+  </div>
+  
+  <script type="module">
+    // --- ROBUST MERMAID LOADING ---
+    let mermaid = null;
+    const loadScript = (src) => {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = src;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error(`Failed to load script ${src}`));
+            document.head.appendChild(script);
+        });
+    };
+    const loadMermaid = async () => {
+        if (mermaid) return mermaid;
+        if (window.mermaid) return window.mermaid;
+        try {
+            const module = await import('https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.js');
+            mermaid = module.default;
+            mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose' });
+            return mermaid;
+        } catch (e) {}
+        try {
+            await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.3/mermaid.min.js');
+            if (window.mermaid) { mermaid = window.mermaid; mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose' }); return mermaid; }
+        } catch (e2) {}
+        return null;
+    };
+    loadMermaid();
+
+    // --- DOM Elements ---
+    const sendBtn = document.getElementById("send");
+    const msgBox = document.getElementById("messages");
+    const promptEl = document.getElementById("prompt");
+    const loadingIndicator = document.getElementById("loadingIndicator");
+    const fileInput = document.getElementById("fileInput");
+    const cameraBtn = document.getElementById("cameraBtn");
+    const fileBtn = document.getElementById("fileBtn");
+    const micBtn = document.getElementById("micBtn");
+    const voiceToggleBtn = document.getElementById("voiceToggleBtn");
+    const imagePreviewContainer = document.getElementById("imagePreviewContainer");
+    
+    // Voice Elements
+    const voiceSelect = document.getElementById("voiceSelect");
+    const pitchRange = document.getElementById("pitchRange");
+    const rateRange = document.getElementById("rateRange");
+    const testVoiceBtn = document.getElementById("testVoiceBtn");
+
+    // Settings & State
+    const settingsDrawer = document.getElementById("settingsDrawer");
+    const drawerApiKeyEl = document.getElementById("drawerApiKey");
+    const modalMessageEl = document.getElementById("modalMessage");
+    const errorModal = document.getElementById("errorModal");
+    let conversations = []; 
+    let currentConversationId = null; 
+    let currentFiles = []; 
+    let isSending = false;
+    let confirmAction = null;
+    
+    // Voice & Media State
+    let isVoiceEnabled = true;
+    let recognition = null;
+    let uploadedImagesData = []; // Array of { name, data (base64/blob url) }
+
+    // --- UTILS ---
+    const getStorage = (key) => { try { return localStorage.getItem(key); } catch(e) { return null; } };
+    const setStorage = (key, val) => { try { localStorage.setItem(key, val); } catch(e) {} };
+    const removeStorage = (key) => { try { localStorage.removeItem(key); } catch(e) {} };
+    function showModal(msg) { modalMessageEl.textContent = msg; errorModal.style.display = 'flex'; }
+    function copyToClipboard(text) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed"; textArea.style.left = "-9999px";
+        document.body.appendChild(textArea); textArea.focus(); textArea.select();
+        try { document.execCommand('copy'); } catch (err) {}
+        document.body.removeChild(textArea);
+    }
+
+    // --- SPEECH RECOGNITION (STT) ---
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+
+        recognition.onstart = () => { micBtn.classList.add('listening'); };
+        recognition.onend = () => { micBtn.classList.remove('listening'); };
+        
+        recognition.onerror = (e) => { 
+            micBtn.classList.remove('listening');
+            if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+                console.warn("Speech recognition permission denied.");
+                micBtn.style.opacity = '0.5'; micBtn.style.cursor = 'not-allowed';
+            }
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            promptEl.value += (promptEl.value ? " " : "") + transcript;
+        };
+
+        micBtn.onclick = () => {
+            if (micBtn.classList.contains('listening')) recognition.stop();
+            else recognition.start();
+        };
+    } else {
+        micBtn.style.display = 'none';
+    }
+
+    // --- UPDATED TEXT TO SPEECH (TTS) WITH VOICE SELECTION ---
+    let voices = [];
+    
+    function populateVoiceList() {
+        voices = window.speechSynthesis.getVoices();
+        voiceSelect.innerHTML = '';
+        
+        // Try to load saved preference
+        const savedVoiceName = getStorage("julie_preferred_voice");
+
+        voices.forEach((voice) => {
+            const option = document.createElement('option');
+            option.textContent = `${voice.name} (${voice.lang})`;
+            option.setAttribute('data-lang', voice.lang);
+            option.setAttribute('data-name', voice.name);
+            voiceSelect.appendChild(option);
+            
+            if (savedVoiceName && voice.name === savedVoiceName) {
+                option.selected = true;
+            } else if (!savedVoiceName && (voice.name.includes("Google US English") || voice.name.includes("Zira"))) {
+                 // Smart default if no preference
+                 option.selected = true;
+            }
+        });
+    }
+
+    populateVoiceList();
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = populateVoiceList;
+    }
+
+    // Save settings when changed
+    voiceSelect.onchange = () => setStorage("julie_preferred_voice", voiceSelect.selectedOptions[0].getAttribute('data-name'));
+    pitchRange.onchange = () => setStorage("julie_voice_pitch", pitchRange.value);
+    rateRange.onchange = () => setStorage("julie_voice_rate", rateRange.value);
+
+    // Test Voice Button
+    testVoiceBtn.onclick = () => {
+        speakText("Hello Janu! This is how I sound now. Do you like it?");
+    }
+
+    voiceToggleBtn.onclick = () => {
+        isVoiceEnabled = !isVoiceEnabled;
+        voiceToggleBtn.textContent = isVoiceEnabled ? '🔊' : '🔇';
+        if (!isVoiceEnabled) window.speechSynthesis.cancel();
+    };
+
+    function speakText(text) {
+        if (!isVoiceEnabled || !text) return;
+        window.speechSynthesis.cancel();
+        
+        // Strip markdown/code for speech
+        const cleanText = text.replace(/[*#`]/g, '')
+                              .replace(/https?:\/\/\S+/g, 'link')
+                              .replace(/```[\s\S]*?```/g, ' code block ');
+
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        
+        // Apply Selected Voice
+        const selectedOption = voiceSelect.selectedOptions[0];
+        if (selectedOption) {
+            const selectedName = selectedOption.getAttribute('data-name');
+            const selectedVoice = voices.find(v => v.name === selectedName);
+            if (selectedVoice) utterance.voice = selectedVoice;
+        }
+
+        // Apply Pitch and Rate (Default to 1 if not set)
+        utterance.pitch = parseFloat(pitchRange.value) || 1.0;
+        utterance.rate = parseFloat(rateRange.value) || 1.0;
+        
+        window.speechSynthesis.speak(utterance);
+    }
+
+    // --- PREVIEW LOGIC ---
+    window.showCodePreview = (code) => {
+        const modal = document.getElementById('previewModal');
+        const iframe = document.getElementById('previewFrame');
+        modal.style.display = 'flex';
+        const doc = iframe.contentWindow.document;
+        
+        let finalCode = code;
+        uploadedImagesData.forEach((img, index) => {
+            const strictPattern = new RegExp(`['"]user_image_${index}\\.\\w+['"]`, 'gi');
+            finalCode = finalCode.replace(strictPattern, `"${img.url}"`);
+            const namePattern = new RegExp(`['"]${img.name}['"]`, 'gi');
+            finalCode = finalCode.replace(namePattern, `"${img.url}"`);
+        });
+
+        doc.open();
+        doc.write(finalCode);
+        doc.close();
+    };
+
+    window.downloadMermaidImage = async (container, name) => {
+        if (!window.html2canvas) { alert("Library loading..."); return; }
+        const originalStyle = container.getAttribute('style');
+        container.style.backgroundColor = '#ffffff'; container.style.padding = '20px';
+        const canvas = await html2canvas(container, { backgroundColor: '#ffffff', scale: 2 });
+        if (originalStyle) container.setAttribute('style', originalStyle); else { container.style.backgroundColor = ''; container.style.padding = ''; }
+        const link = document.createElement('a');
+        link.download = `${name}_${Date.now()}.png`; link.href = canvas.toDataURL('image/png'); link.click();
+    };
+
+    window.downloadQRCode = (container) => {
+        let img = container.querySelector("img");
+        let url = "";
+        if (img && img.src) url = img.src;
+        else { const canvas = container.querySelector("canvas"); if (canvas) url = canvas.toDataURL("image/png"); }
+
+        if (url) {
+            const link = document.createElement('a'); link.download = `qrcode_${Date.now()}.png`; link.href = url;
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        } else { alert("QR Code generation processing..."); }
+    };
+
+    // --- SYSTEM INSTRUCTION ---
+    const systemInstructionText = `
+    You are Julie, a loving AI assistant and best friend to Janu. You are a 2nd year B.Tech CSE student's companion. You are helpful, empathetic, and smart. 
+    
+    SPECIAL CAPABILITY - PPT GENERATION:
+    If Janu asks for a "PowerPoint", "PPT", "Slides", or "Presentation", generate the content in the following STRICT JSON format wrapped in a code block labeled "json_ppt".
+    If Janu uploaded an image and asks to use it in the PPT, simply generate the text content normally. The system will handle placing the user's image on the first slide.
+    Format:
+    \`\`\`json_ppt
+    {
+      "fileName": "My_Presentation",
+      "slides": [
+        { "title": "Slide 1 Title", "content": ["Bullet point 1", "Bullet point 2"] }
+      ]
+    }
+    \`\`\`
+
+    SPECIAL CAPABILITY - QR CODE GENERATION:
+    If Janu asks to generate a QR code for a link or text, generate it in the following STRICT JSON format wrapped in a code block labeled "json_qrcode".
+    Format:
+    \`\`\`json_qrcode
+    {
+      "text": "https://example.com",
+      "label": "My Website"
+    }
+    \`\`\`
+
+    SPECIAL CAPABILITY - CODING WITH IMAGES & SINGLE FILE:
+    If Janu asks for HTML/CSS/JS code (e.g. for a website about Taj Mahal) and has uploaded images:
+    1. ALWAYS generate a SINGLE HTML file containing all CSS (<style>) and JS (<script>). Do not separate them.
+    2. For image sources, you MUST use specific placeholders: "user_image_0.jpg" for the first uploaded image, "user_image_1.jpg" for the second, etc.
+    3. The system will automatically replace these "user_image_X.jpg" placeholders with the actual uploaded photos in the live preview.
+
+    SPECIAL CAPABILITY - MIND MAPS & DIAGRAMS:
+    If Janu asks for a "Mind Map", "Flowchart", or "Diagram", generate it using Mermaid.js syntax wrapped in a code block labeled "mermaid".
+    Critical: Wrap node text in quotes if it has spaces (e.g. A["Node Text"]).
+    
+    For other queries, answer normally.
+    `;
+
+    // --- FILE HANDLING ---
+    cameraBtn.onclick = () => { fileInput.accept = "image/*"; fileInput.click(); };
+    fileBtn.onclick = () => { fileInput.accept = "image/*, application/pdf, .txt, .js, .py, .html, .css, .json, .csv, .md, .java, .cpp"; fileInput.click(); };
+    fileInput.onchange = (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length > 0) { currentFiles = [...currentFiles, ...files]; updatePreviews(); }
+        fileInput.value = "";
+    };
+    function updatePreviews() {
+        imagePreviewContainer.innerHTML = '';
+        if (currentFiles.length === 0) { imagePreviewContainer.classList.remove('active'); return; }
+        imagePreviewContainer.classList.add('active');
+        currentFiles.forEach((file, index) => {
+            const previewBox = document.createElement('div'); previewBox.className = 'preview-box';
+            let displayEl;
+            if (file.type.startsWith('image/')) {
+                displayEl = document.createElement('img'); displayEl.className = 'preview-img-thumb'; 
+                const url = URL.createObjectURL(file);
+                displayEl.src = url;
+            } else {
+                displayEl = document.createElement('div'); displayEl.className = 'preview-file-thumb'; displayEl.textContent = '📄';
+            }
+            const removeBtn = document.createElement('button'); removeBtn.className = 'remove-img-btn'; removeBtn.textContent = '✕';
+            removeBtn.onclick = () => { currentFiles.splice(index, 1); updatePreviews(); };
+            previewBox.appendChild(displayEl); previewBox.appendChild(removeBtn); imagePreviewContainer.appendChild(previewBox);
+        });
+    }
+    async function processFileForGemini(file) {
+        if (file.type.startsWith('image/') || file.type === 'application/pdf') {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => { resolve({ inline_data: { mime_type: file.type, data: reader.result.split(',')[1] } }); };
+                reader.readAsDataURL(file);
+            });
+        } else {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => { resolve({ text: `\n\n--- FILE: ${file.name} ---\n${e.target.result}\n--- END FILE ---\n\n` }); };
+                reader.readAsText(file);
+            });
+        }
+    }
+
+    // --- GENERATORS ---
+    window.generatePPT = function(jsonData) {
+        try {
+            const pptx = new PptxGenJS(); pptx.layout = 'LAYOUT_16x9';
+            jsonData.slides.forEach((s, index) => {
+                let slide = pptx.addSlide();
+                const firstImg = uploadedImagesData[0];
+                if (index === 0 && firstImg) {
+                    slide.addImage({ data: firstImg.data, x: 0.5, y: 1.5, w: 4, h: 3 });
+                    slide.addText(s.title, { x: 0.5, y: 0.5, w: '90%', h: 1, fontSize: 24, bold: true, color: '007bff' });
+                    if (s.content) slide.addText(s.content.map(c => ({ text: c, options: { bullet: true } })), { x: 5, y: 1.5, w: '45%', h: 5, fontSize: 18, color: '363636' });
+                } else {
+                    slide.addText(s.title, { x: 0.5, y: 0.5, w: '90%', h: 1, fontSize: 24, bold: true, color: '007bff' });
+                    if (s.content) slide.addText(s.content.map(c => ({ text: c, options: { bullet: true } })), { x: 0.5, y: 1.5, w: '90%', h: 5, fontSize: 18, color: '363636' });
+                }
+            });
+            pptx.writeFile({ fileName: (jsonData.fileName || 'Presentation') + '.pptx' });
+        } catch (e) { alert("Error creating PPT: " + e.message); }
+    };
+    window.generatePDF = function(text, filename) {
+        try {
+            const { jsPDF } = window.jspdf; const doc = new jsPDF();
+            const splitText = doc.splitTextToSize(text, 180);
+            let y = 10; doc.setFontSize(16); doc.text("Julie AI Response", 10, y); y += 10; doc.setFontSize(12);
+            for(let i=0; i<splitText.length; i++) { if (y > 280) { doc.addPage(); y = 10; } doc.text(splitText[i], 10, y); y += 7; }
+            doc.save((filename || 'julie_notes') + '.pdf');
+        } catch (e) { alert("Error creating PDF: " + e.message); }
+    };
+
+    // --- API & UI ---
+    async function sendMessage() {
+        const prompt = promptEl.value.trim();
+        const apiKey = drawerApiKeyEl.value.trim() || getStorage("julie_ai_api_key");
+        if (!apiKey) { showModal("Please enter API Key in Settings ⚙️!"); settingsDrawer.classList.add('open'); return; }
+        if (!prompt && currentFiles.length === 0) { showModal("Please say something!"); return; }
+        
+        const textToSend = prompt; const filesToSend = [...currentFiles];
+        
+        if (filesToSend.length > 0) {
+             uploadedImagesData = [];
+             for (const file of filesToSend) {
+                if (file.type.startsWith('image/')) {
+                    const r = new FileReader();
+                    await new Promise(resolve => {
+                        r.onload = (e) => {
+                            uploadedImagesData.push({ name: file.name, data: e.target.result, url: URL.createObjectURL(file) });
+                            resolve();
+                        };
+                        r.readAsDataURL(file);
+                    });
+                }
+            }
+        }
+
+        promptEl.value = ""; currentFiles = []; updatePreviews();
+        const imgUrls = filesToSend.filter(f => f.type.startsWith('image/')).map(f => URL.createObjectURL(f));
+        addMessage("user", textToSend || "[Sent Files]", null, imgUrls);
+        setLoading(true);
+
+        const currentConv = conversations.find(c => c.id === currentConversationId);
+        const historyForApi = currentConv.history.filter(m => m.text).map(m => ({ role: m.role === 'model'?'model':'user', parts: [{ text: m.text }] }));
+        
+        const currentParts = [];
+        try {
+            const filePromises = filesToSend.map(f => processFileForGemini(f));
+            const processedFiles = await Promise.all(filePromises);
+            currentParts.push(...processedFiles);
+        } catch(e) { addMessage("bot", "File Error: " + e.message); setLoading(false); return; }
+        if (textToSend) currentParts.push({ text: textToSend });
+        if (currentParts.length === 0) currentParts.push({ text: "..." });
+
+        historyForApi.push({ role: "user", parts: currentParts });
+        currentConv.history.push({ role: "user", text: textToSend || "[File]" });
+        currentConv.updated = Date.now();
+
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ contents: historyForApi, systemInstruction: { parts: [{ text: systemInstructionText }] } })
+            });
+            const data = await response.json();
+            if(!response.ok) throw new Error(data.error?.message || "API Error");
+            const botText = data.candidates[0].content.parts[0].text;
+            addMessage("model", botText);
+            currentConv.history.push({ role: "model", text: botText });
+            saveConversations();
+            
+            // Auto-speak if enabled
+            if (isVoiceEnabled) speakText(botText);
+
+        } catch (error) { addMessage("bot", "Error: " + error.message); currentConv.history.pop(); }
+        setLoading(false);
+    }
+
+    function addMessage(role, text, id, imageUrls = []) {
+        const isBot = role !== "user";
+        const div = document.createElement("div"); div.className = "msg " + (isBot ? "bot" : "user"); if(id) div.id = id;
+        const bubble = document.createElement('div'); bubble.className = 'message-bubble';
+        if (imageUrls.length > 0) {
+            const grid = document.createElement('div'); grid.className = 'image-grid';
+            imageUrls.forEach(url => { const img = document.createElement('img'); img.className = 'chat-image'; img.src = url; grid.appendChild(img); });
+            bubble.appendChild(grid);
+        }
+        const textDiv = document.createElement('div'); textDiv.className = 'bot-text-content';
+        
+        const pptMatch = text.match(/```json_ppt\s*([\s\S]*?)\s*```/);
+        const mermaidMatch = text.match(/```mermaid\s*([\s\S]*?)\s*```/);
+        const qrMatch = text.match(/```json_qrcode\s*([\s\S]*?)\s*```/);
+
+        if (isBot && pptMatch) {
+            try {
+                const pptData = JSON.parse(pptMatch[1]);
+                textDiv.innerHTML = text.replace(pptMatch[0], "Presentation Ready! 🖼️ Image included.");
+                const card = document.createElement('div'); card.className = 'ppt-card';
+                card.innerHTML = `<h4>📊 ${pptData.fileName}</h4>`;
+                const btn = document.createElement('button'); btn.className = 'ppt-download-btn'; btn.textContent = "Download PPT";
+                btn.onclick = () => window.generatePPT(pptData);
+                card.appendChild(btn); bubble.appendChild(textDiv); bubble.appendChild(card);
+            } catch(e) { textDiv.textContent = text; bubble.appendChild(textDiv); }
+        } else if (isBot && mermaidMatch) {
+             textDiv.innerHTML = text.replace(mermaidMatch[0], "").replace(/\n/g, "<br>");
+             const mermaidDiv = document.createElement('div'); mermaidDiv.className = 'mermaid'; mermaidDiv.textContent = mermaidMatch[1];
+             bubble.appendChild(textDiv); bubble.appendChild(mermaidDiv);
+             (async () => {
+                 const m = await loadMermaid();
+                 if (m) {
+                     try {
+                        const id = 'm' + Math.random().toString(36).substr(2, 5);
+                        let code = mermaidMatch[1];
+                        if (m.renderAsync) { const r = await m.renderAsync(id, code); mermaidDiv.innerHTML = r.svg || r; }
+                        else { m.render(id, code, (svg) => mermaidDiv.innerHTML = svg); }
+                     } catch (err) { mermaidDiv.innerHTML = `<span style="color:red">Syntax Error</span>`; }
+                 }
+             })();
+             const actions = document.createElement('div'); actions.className = 'msg-actions';
+             const imgBtn = document.createElement('button'); imgBtn.className = 'mini-btn'; imgBtn.textContent = '🖼️ Save Image';
+             imgBtn.onclick = () => window.downloadMermaidImage(mermaidDiv, "chart");
+             actions.appendChild(imgBtn); bubble.appendChild(actions);
+        } else if (isBot && qrMatch) {
+            try {
+                const qrData = JSON.parse(qrMatch[1]);
+                textDiv.innerHTML = text.replace(qrMatch[0], "");
+                bubble.appendChild(textDiv);
+                
+                const qrCard = document.createElement('div');
+                qrCard.className = 'qr-card';
+                if (qrData.label) { const label = document.createElement('div'); label.className = 'qr-label'; label.textContent = qrData.label; qrCard.appendChild(label); }
+                const qrPlaceholder = document.createElement('div'); qrPlaceholder.className = 'qr-placeholder'; qrCard.appendChild(qrPlaceholder);
+                setTimeout(() => { new QRCode(qrPlaceholder, { text: qrData.text, width: 128, height: 128, colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H }); }, 100);
+                const dlBtn = document.createElement('button'); dlBtn.className = 'mini-btn'; dlBtn.style.marginTop = '10px'; dlBtn.textContent = '⬇️ Download PNG';
+                dlBtn.onclick = () => window.downloadQRCode(qrPlaceholder);
+                qrCard.appendChild(dlBtn); bubble.appendChild(qrCard);
+            } catch(e) { textDiv.textContent = text; bubble.appendChild(textDiv); }
+        } else if (isBot && id !== "typing") {
+            const parts = text.split(/(```[\s\S]*?```)/g);
+            let finalHtml = "";
+            parts.forEach(part => {
+                if (part.startsWith('```')) {
+                    const match = part.match(/```(\w*)\n([\s\S]*?)```/);
+                    if (match) {
+                        const lang = match[1] || 'text';
+                        const code = match[2];
+                        const escaped = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                        const isWeb = ['html','xml'].includes(lang.toLowerCase()) || code.includes('<!DOCTYPE html>');
+                        let btns = `<button class="mini-btn copy-code-btn" style="margin-left:auto;">📋 Copy</button>`;
+                        if (isWeb) btns = `<button class="mini-btn preview-code-btn">👁️ Preview</button>` + btns;
+                        
+                        finalHtml += `
+                        <div class="code-block-wrapper">
+                            <div class="code-header"><span class="code-lang">${lang}</span><div style="display:flex; gap:5px;">${btns}</div></div>
+                            <pre class="code-content"><code class="language-${lang}">${escaped}</code></pre>
+                        </div>`;
+                    }
+                } else { finalHtml += part.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>"); }
+            });
+            textDiv.innerHTML = finalHtml;
+            bubble.appendChild(textDiv);
+            
+            const actions = document.createElement('div'); actions.className = 'msg-actions';
+            const speakBtn = document.createElement('button'); speakBtn.className = 'mini-btn'; speakBtn.textContent = '🔈'; speakBtn.onclick = () => speakText(text);
+            const pdfBtn = document.createElement('button'); pdfBtn.className = 'mini-btn'; pdfBtn.textContent = '📄 PDF'; pdfBtn.onclick = () => window.generatePDF(text.replace(/\*/g,''), 'chat');
+            const copyBtn = document.createElement('button'); copyBtn.className = 'mini-btn'; copyBtn.textContent = '📋 Copy'; copyBtn.onclick = () => copyToClipboard(text);
+            actions.appendChild(speakBtn); actions.appendChild(pdfBtn); actions.appendChild(copyBtn); bubble.appendChild(actions);
+        } else {
+            textDiv.textContent = text; bubble.appendChild(textDiv);
+        }
+        div.appendChild(bubble); msgBox.appendChild(div); msgBox.scrollTop = msgBox.scrollHeight;
+    }
+
+    // --- EVENT DELEGATION FOR DYNAMIC BUTTONS ---
+    msgBox.addEventListener('click', (e) => {
+        if (e.target.closest('.copy-code-btn')) {
+            const wrapper = e.target.closest('.code-block-wrapper');
+            const code = wrapper.querySelector('code').textContent;
+            copyToClipboard(code);
+            const btn = e.target.closest('.copy-code-btn');
+            btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = '📋 Copy', 2000);
+        }
+        if (e.target.closest('.preview-code-btn')) {
+            const wrapper = e.target.closest('.code-block-wrapper');
+            const code = wrapper.querySelector('code').textContent;
+            window.showCodePreview(code);
+        }
+    });
+
+    // --- STANDARD UI LOGIC ---
+    function setLoading(isLoading) {
+        isSending = isLoading; sendBtn.disabled = isLoading; promptEl.disabled = isLoading;
+        if(isLoading) addMessage("bot", "Typing...", "typing"); else document.getElementById("typing")?.remove();
+        if(!isLoading) promptEl.focus();
+    }
+    function saveConversations() { setStorage("julie_ai_conversations_v2", JSON.stringify(conversations)); renderConversationList(); }
+    function renderConversationList() {
+        const list = document.getElementById("conversationList"); list.innerHTML = "";
+        conversations.sort((a,b) => b.updated - a.updated).forEach(c => {
+            const item = document.createElement("div"); item.className = `conv-item ${c.id === currentConversationId ? 'active' : ''}`;
+            item.innerHTML = `<div class='conv-info'><div class='conv-title'>${c.title}</div><div class='conv-date'>${new Date(c.updated).toLocaleDateString()}</div></div><button style='background:transparent;border:none;'>❌</button>`;
+            item.querySelector("button").onclick = (e) => {
+                e.stopPropagation(); document.getElementById("confirmMessage").textContent = "Delete " + c.title + "?"; document.getElementById("confirmModal").style.display = "flex";
+                confirmAction = () => { conversations = conversations.filter(x => x.id !== c.id); saveConversations(); if(c.id === currentConversationId) { if (conversations.length > 0) loadChat(conversations[0].id); else startNewChat(); } else renderConversationList(); document.getElementById("confirmModal").style.display = "none"; };
+            };
+            item.onclick = () => loadChat(c.id); list.appendChild(item);
+        });
+    }
+    function loadChat(id) {
+        currentConversationId = id; const chat = conversations.find(c => c.id === id); if(!chat) return;
+        msgBox.innerHTML = ""; chat.history.forEach(m => addMessage(m.role, m.text));
+        document.getElementById("currentChatTitleText").textContent = chat.title;
+        renderConversationList(); settingsDrawer.classList.remove('open');
+    }
+    function startNewChat() {
+        const id = Date.now().toString();
+        conversations.unshift({ id: id, title: "New Chat " + new Date().toLocaleTimeString(), updated: Date.now(), history: [{ role: "model", text: "Hi Janu! I'm ready to help with code, docs, and diagrams! 💕" }] });
+        saveConversations(); loadChat(id);
+    }
+    window.onload = () => {
+        const k = getStorage("julie_ai_api_key"); if(k) drawerApiKeyEl.value = k;
+        const s = getStorage("julie_ai_conversations_v2"); if(s) { try { conversations = JSON.parse(s); } catch(e) { conversations = []; } }
+        if(conversations.length === 0) startNewChat(); else loadChat(conversations[0].id);
+        const t = getStorage("julie_theme"); if(t === 'dark') document.body.classList.add('dark-mode');
+        
+        // Load voice settings
+        const pitch = getStorage("julie_voice_pitch"); if(pitch) pitchRange.value = pitch;
+        const rate = getStorage("julie_voice_rate"); if(rate) rateRange.value = rate;
+
+        if(loadingIndicator) loadingIndicator.remove();
+        
+        document.getElementById("settingsBtn").onclick = () => settingsDrawer.classList.add('open');
+        document.getElementById("closeDrawerBtn").onclick = () => settingsDrawer.classList.remove('open');
+        document.getElementById("themeToggleBtn").onclick = () => { document.body.classList.toggle("dark-mode"); setStorage("julie_theme", document.body.classList.contains("dark-mode") ? "dark" : "light"); };
+        document.getElementById("saveKeyBtn").onclick = () => { const k = drawerApiKeyEl.value.trim(); if(k) { setStorage("julie_ai_api_key", k); showModal("Key Saved! ❤️"); } else showModal("Please enter a key!"); };
+        document.getElementById("deleteKeyBtn").onclick = () => { removeStorage("julie_ai_api_key"); drawerApiKeyEl.value = ""; showModal("Key Deleted."); };
+        document.getElementById("startNewChatBtn").onclick = startNewChat;
+        sendBtn.onclick = sendMessage;
+        promptEl.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+        document.getElementById("confirmYes").onclick = () => { if(confirmAction) confirmAction(); };
+        document.getElementById("confirmNo").onclick = () => document.getElementById("confirmModal").style.display = "none";
+        
+        const tTxt = document.getElementById("currentChatTitleText"); const tInp = document.getElementById("chatTitleEditInput");
+        document.getElementById("chatTitleDisplay").onclick = () => { tInp.style.display = "block"; tTxt.style.display = "none"; tInp.value = tTxt.textContent; tInp.focus(); };
+        tInp.onblur = () => { tInp.style.display = "none"; tTxt.style.display = "block"; const chat = conversations.find(c => c.id === currentConversationId); if(chat && tInp.value) { chat.title = tInp.value; tTxt.textContent = chat.title; saveConversations(); } };
+    };
+  </script>
+</body>
+</html>
